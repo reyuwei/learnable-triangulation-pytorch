@@ -108,8 +108,8 @@ def undistort_and_save(idx):
 print(f"Undistorting images using {number_of_processes} parallel processes")
 cv2.setNumThreads(1)
 import multiprocessing
-
-pool = multiprocessing.Pool(number_of_processes)
-for _ in tqdm(pool.imap_unordered(
-    undistort_and_save, range(len(dataset)), chunksize=10), total=len(dataset)):
-    pass
+if __name__ == '__main__':  
+    pool = multiprocessing.Pool(number_of_processes)
+    for _ in tqdm(pool.imap_unordered(
+        undistort_and_save, range(len(dataset)), chunksize=10), total=len(dataset)):
+        pass

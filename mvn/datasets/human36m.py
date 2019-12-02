@@ -108,6 +108,8 @@ class Human36MMultiViewDataset(Dataset):
             self.keypoints_3d_pred = keypoints_3d_pred[::retain_every_n_frames_in_test]
             assert len(self.keypoints_3d_pred) == len(self)
 
+        print("dataset length: " + str(len(self)))
+
     def __len__(self):
         return len(self.labels['table'])
 

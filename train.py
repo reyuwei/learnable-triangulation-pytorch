@@ -48,6 +48,7 @@ def parse_args():
 
 def setup_human36m_dataloaders(config, is_train, distributed_train):
     train_dataloader = None
+    train_sampler = None
     if is_train:
         # train
         train_dataset = human36m.Human36MMultiViewDataset(
@@ -129,7 +130,7 @@ def setup_experiment(config, model_name, is_train=True):
 
     experiment_title = prefix + experiment_title
 
-    experiment_name = '{}@{}'.format(experiment_title, datetime.now().strftime("%d.%m.%Y-%H:%M:%S"))
+    experiment_name = '{}@{}'.format(experiment_title, datetime.now().strftime("%d%m%Y_%H-%M-%S"))
     print("Experiment name: {}".format(experiment_name))
 
     experiment_dir = os.path.join(args.logdir, experiment_name)
@@ -175,6 +176,8 @@ def one_epoch(model, criterion, opt, config, dataloader, device, epoch, n_iters_
             iterator = islice(iterator, config.opt.n_iters_per_epoch)
 
         for iter_i, batch in iterator:
+            if iter_i % 100 == 0:
+                print(str(iter_i) + " / " + str(len(dataloader)))
             with autograd.detect_anomaly():
                 # measure data loading time
                 data_time.update(time.time() - end)
@@ -443,7 +446,12 @@ def main(args):
 
     # datasets
     print("Loading data...")
-    train_dataloader, val_dataloader, train_sampler = setup_dataloaders(config, distributed_train=is_distributed)
+    if args.eval:
+        is_train = False
+    else:
+        is_train = True
+    train_dataloader, val_dataloader, train_sampler = setup_dataloaders(config, distributed_train=is_distributed, is_train=is_train)
+    # train_dataloader, val_dataloader, train_sampler = setup_dataloaders(config, distributed_train=is_distributed)
 
     # experiment
     experiment_dir, writer = None, None

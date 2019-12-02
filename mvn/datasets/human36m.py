@@ -162,6 +162,7 @@ class Human36MMultiViewDataset(Dataset):
             if self.norm_image:
                 image = normalize_image(image)
 
+            sample['imgpath'].append(image_path)
             sample['images'].append(image)
             sample['detections'].append(bbox + (1.0,)) # TODO add real confidences
             sample['cameras'].append(retval_camera)

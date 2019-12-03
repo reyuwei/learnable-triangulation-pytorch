@@ -51,32 +51,60 @@ def setup_human36m_dataloaders(config, is_train, distributed_train):
     train_sampler = None
     if is_train:
         # train
+        # train_dataset = human36m.Human36MMultiViewDataset(
+        #     h36m_root=config.dataset.train.h36m_root,
+        #     pred_results_path=config.dataset.train.pred_results_path if hasattr(config.dataset.train, "pred_results_path") else None,
+        #     train=True,
+        #     test=False,
+        #     image_shape=config.image_shape if hasattr(config, "image_shape") else (256, 256),
+        #     labels_path=config.dataset.train.labels_path,
+        #     with_damaged_actions=config.dataset.train.with_damaged_actions,
+        #     scale_bbox=config.dataset.train.scale_bbox,
+        #     kind=config.kind,
+        #     undistort_images=config.dataset.train.undistort_images,
+        #     ignore_cameras=config.dataset.train.ignore_cameras if hasattr(config.dataset.train, "ignore_cameras") else [],
+        #     crop=config.dataset.train.crop if hasattr(config.dataset.train, "crop") else True,
+        # )
+        #
+        # train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset) if distributed_train else None
+        #
+        # train_dataloader = DataLoader(
+        #     train_dataset,
+        #     batch_size=config.opt.batch_size,
+        #     shuffle=config.dataset.train.shuffle and (train_sampler is None), # debatable
+        #     sampler=train_sampler,
+        #     collate_fn=dataset_utils.make_collate_fn(randomize_n_views=config.dataset.train.randomize_n_views,
+        #                                              min_n_views=config.dataset.train.min_n_views,
+        #                                              max_n_views=config.dataset.train.max_n_views),
+        #     num_workers=config.dataset.train.num_workers,
+        #     worker_init_fn=dataset_utils.worker_init_fn
+        # )
+
         train_dataset = human36m.Human36MMultiViewDataset(
             h36m_root=config.dataset.train.h36m_root,
-            pred_results_path=config.dataset.train.pred_results_path if hasattr(config.dataset.train, "pred_results_path") else None,
+            pred_results_path=config.dataset.train.pred_results_path if hasattr(config.dataset.train,
+                                                                              "pred_results_path") else None,
             train=True,
             test=False,
             image_shape=config.image_shape if hasattr(config, "image_shape") else (256, 256),
             labels_path=config.dataset.train.labels_path,
-            with_damaged_actions=config.dataset.train.with_damaged_actions,
-            scale_bbox=config.dataset.train.scale_bbox,
+            with_damaged_actions=config.dataset.val.with_damaged_actions,
+            retain_every_n_frames_in_test=config.dataset.val.retain_every_n_frames_in_test,
+            scale_bbox=config.dataset.val.scale_bbox,
             kind=config.kind,
-            undistort_images=config.dataset.train.undistort_images,
-            ignore_cameras=config.dataset.train.ignore_cameras if hasattr(config.dataset.train, "ignore_cameras") else [],
-            crop=config.dataset.train.crop if hasattr(config.dataset.train, "crop") else True,
+            undistort_images=config.dataset.val.undistort_images,
+            ignore_cameras=config.dataset.val.ignore_cameras if hasattr(config.dataset.val, "ignore_cameras") else [],
+            crop=config.dataset.val.crop if hasattr(config.dataset.val, "crop") else True,
         )
-
-        train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset) if distributed_train else None
 
         train_dataloader = DataLoader(
             train_dataset,
-            batch_size=config.opt.batch_size,
-            shuffle=config.dataset.train.shuffle and (train_sampler is None), # debatable
-            sampler=train_sampler,
-            collate_fn=dataset_utils.make_collate_fn(randomize_n_views=config.dataset.train.randomize_n_views,
-                                                     min_n_views=config.dataset.train.min_n_views,
-                                                     max_n_views=config.dataset.train.max_n_views),
-            num_workers=config.dataset.train.num_workers,
+            batch_size=config.opt.val_batch_size if hasattr(config.opt, "val_batch_size") else config.opt.batch_size,
+            shuffle=config.dataset.val.shuffle,
+            collate_fn=dataset_utils.make_collate_fn(randomize_n_views=config.dataset.val.randomize_n_views,
+                                                     min_n_views=config.dataset.val.min_n_views,
+                                                     max_n_views=config.dataset.val.max_n_views),
+            num_workers=config.dataset.val.num_workers,
             worker_init_fn=dataset_utils.worker_init_fn
         )
 
@@ -167,6 +195,9 @@ def one_epoch(model, criterion, opt, config, dataloader, device, epoch, n_iters_
     results = defaultdict(list)
     pred_2d_all_dict = defaultdict(list)
 
+    checkpoint_dir = os.path.join(experiment_dir, "checkpoints", "{:04}".format(epoch))
+    os.makedirs(checkpoint_dir, exist_ok=True)
+
     # used to turn on/off gradients
     grad_context = torch.autograd.enable_grad if is_train else torch.no_grad
     with grad_context():
@@ -179,6 +210,8 @@ def one_epoch(model, criterion, opt, config, dataloader, device, epoch, n_iters_
         for iter_i, batch in iterator:
             if iter_i % 100 == 0:
                 print(str(iter_i) + " / " + str(len(dataloader)))
+                with open(os.path.join(checkpoint_dir, str(iter_i) + "_pred_2d.pkl"), 'wb') as fout:
+                    pickle.dump(pred_2d_all_dict, fout)
             with autograd.detect_anomaly():
                 # measure data loading time
                 data_time.update(time.time() - end)
@@ -363,8 +396,8 @@ def one_epoch(model, criterion, opt, config, dataloader, device, epoch, n_iters_
             #
             # metric_dict['dataset_metric'].append(scalar_metric)
             #
-            checkpoint_dir = os.path.join(experiment_dir, "checkpoints", "{:04}".format(epoch))
-            os.makedirs(checkpoint_dir, exist_ok=True)
+            # checkpoint_dir = os.path.join(experiment_dir, "checkpoints", "{:04}".format(epoch))
+            # os.makedirs(checkpoint_dir, exist_ok=True)
             #
             # # dump results
             # with open(os.path.join(checkpoint_dir, "results.pkl"), 'wb') as fout:
@@ -461,12 +494,12 @@ def main(args):
 
     # datasets
     print("Loading data...")
-    if args.eval:
-        is_train = False
-    else:
-        is_train = True
-    train_dataloader, val_dataloader, train_sampler = setup_dataloaders(config, distributed_train=is_distributed, is_train=is_train)
-    # train_dataloader, val_dataloader, train_sampler = setup_dataloaders(config, distributed_train=is_distributed)
+    # if args.eval:
+    #     is_train = False
+    # else:
+    #     is_train = True
+    # train_dataloader, val_dataloader, train_sampler = setup_dataloaders(config, distributed_train=is_distributed, is_train=is_train)
+    train_dataloader, val_dataloader, train_sampler = setup_dataloaders(config, distributed_train=is_distributed)
 
     # experiment
     experiment_dir, writer = None, None

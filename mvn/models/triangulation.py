@@ -174,30 +174,30 @@ class AlgebraicTriangulationNet(nn.Module):
         alg_confidences = alg_confidences + 1e-5  # for numerical stability
 
         # # calcualte shapes
-        # image_shape = tuple(images.shape[3:])
-        # batch_size, n_views, n_joints, heatmap_shape = heatmaps.shape[0], heatmaps.shape[1], heatmaps.shape[2], tuple(heatmaps.shape[3:])
-        #
-        # # upscale keypoints_2d, because image shape != heatmap shape
-        # keypoints_2d_transformed = torch.zeros_like(keypoints_2d)
-        # keypoints_2d_transformed[:, :, :, 0] = keypoints_2d[:, :, :, 0] * (image_shape[1] / heatmap_shape[1])
-        # keypoints_2d_transformed[:, :, :, 1] = keypoints_2d[:, :, :, 1] * (image_shape[0] / heatmap_shape[0])
-        # keypoints_2d = keypoints_2d_transformed
-        #
-        # # triangulate
-        # try:
-        #     keypoints_3d = multiview.triangulate_batch_of_points(
-        #         proj_matricies, keypoints_2d,
-        #         confidences_batch=alg_confidences
-        #     )
-        # except RuntimeError as e:
-        #     print("Error: ", e)
-        #
-        #     print("confidences =", confidences_batch_pred)
-        #     print("proj_matricies = ", proj_matricies)
-        #     print("keypoints_2d_batch_pred =", keypoints_2d_batch_pred)
-        #     exit()
+        image_shape = tuple(images.shape[3:])
+        batch_size, n_views, n_joints, heatmap_shape = heatmaps.shape[0], heatmaps.shape[1], heatmaps.shape[2], tuple(heatmaps.shape[3:])
 
-        # return keypoints_3d, keypoints_2d, heatmaps, alg_confidences
+        # upscale keypoints_2d, because image shape != heatmap shape
+        keypoints_2d_transformed = torch.zeros_like(keypoints_2d)
+        keypoints_2d_transformed[:, :, :, 0] = keypoints_2d[:, :, :, 0] * (image_shape[1] / heatmap_shape[1])
+        keypoints_2d_transformed[:, :, :, 1] = keypoints_2d[:, :, :, 1] * (image_shape[0] / heatmap_shape[0])
+        keypoints_2d = keypoints_2d_transformed
+
+        # triangulate
+        try:
+            keypoints_3d = multiview.triangulate_batch_of_points(
+                proj_matricies, keypoints_2d,
+                confidences_batch=alg_confidences
+            )
+        except RuntimeError as e:
+            print("Error: ", e)
+
+            print("confidences =", confidences_batch_pred)
+            print("proj_matricies = ", proj_matricies)
+            print("keypoints_2d_batch_pred =", keypoints_2d_batch_pred)
+            exit()
+
+        return keypoints_3d, keypoints_2d, heatmaps, alg_confidences
 
         return None, keypoints_2d, heatmaps, alg_confidences
 

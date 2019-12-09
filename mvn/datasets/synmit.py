@@ -15,6 +15,7 @@ import xml.etree.cElementTree as ET
 import json_tricks as json
 import re
 import matplotlib.pyplot as plt
+from pathlib import *
 
 class SynMITMultiviewDataset(Dataset):
     """
@@ -67,8 +68,12 @@ class SynMITMultiviewDataset(Dataset):
         print("dataset length: " + str(len(self)))
 
     def abspath2remotepath(self, abspath):
+        root_path = Path(self.root)
         search_str = "animation_mit"
-        return self.root + abspath[abspath.index(search_str) + len(search_str)+1:]
+        real_path = PureWindowsPath(abspath[abspath.index(search_str) + len(search_str)+1:])
+        correct_path = Path(real_path)
+        real_path = root_path / real_path
+        return str(real_path)
 
     def cam2projm(self, camera):
         K = camera['K']

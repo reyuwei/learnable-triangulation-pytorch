@@ -470,6 +470,7 @@ def init_distributed(args):
 
 
 def main(args):
+    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
     print("Number of available GPUs: {}".format(torch.cuda.device_count()))
 
     is_distributed = init_distributed(args)
@@ -549,6 +550,7 @@ def main(args):
     if not args.eval:
         # train loop
         n_iters_total_train, n_iters_total_val = 0, 0
+        print(config.opt.n_epochs)
         for epoch in range(config.opt.n_epochs):
             if train_sampler is not None:
                 train_sampler.set_epoch(epoch)

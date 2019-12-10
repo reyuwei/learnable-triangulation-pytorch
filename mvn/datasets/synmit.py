@@ -319,26 +319,12 @@ class SynMITMultiviewDataset(Dataset):
                 'Average': {'total_loss': per_pose_error[mask].sum(), 'frame_count': np.count_nonzero(mask)}
             }
 
-            for action_idx in range(len(self.labels['action_names'])):
-                action_mask = (self.labels['table']['action_idx'] == action_idx) & mask
+            for action_idx in range(1):
+                action_mask = mask
                 action_per_pose_error = per_pose_error[action_mask]
-                action_scores[self.labels['action_names'][action_idx]] = {
+                action_scores['all'] = {
                     'total_loss': action_per_pose_error.sum(), 'frame_count': len(action_per_pose_error)
                 }
-
-            action_names_without_trials = \
-                [name[:-2] for name in self.labels['action_names'] if name.endswith('-1')]
-
-            for action_name_without_trial in action_names_without_trials:
-                combined_score = {'total_loss': 0.0, 'frame_count': 0}
-
-                for trial in 1, 2:
-                    action_name = '%s-%d' % (action_name_without_trial, trial)
-                    combined_score['total_loss' ] += action_scores[action_name]['total_loss']
-                    combined_score['frame_count'] += action_scores[action_name]['frame_count']
-                    del action_scores[action_name]
-
-                action_scores[action_name_without_trial] = combined_score
 
             for k, v in action_scores.items():
                 action_scores[k] = v['total_loss'] / v['frame_count']
@@ -349,47 +335,37 @@ class SynMITMultiviewDataset(Dataset):
             'Average': evaluate_by_actions(self, per_pose_error)
         }
 
-        for subject_idx in range(len(self.labels['subject_names'])):
-            subject_mask = self.labels['table']['subject_idx'] == subject_idx
-            subject_scores[self.labels['subject_names'][subject_idx]] = \
-                evaluate_by_actions(self, per_pose_error, subject_mask)
+        for subject_idx in range(1):
+            subject_mask = np.ones_like(per_pose_error, dtype=bool)
+            subject_scores['all'] = evaluate_by_actions(self, per_pose_error, subject_mask)
 
         return subject_scores
 
-    def evaluate(self, keypoints_3d_predicted, split_by_subject=False, transfer_cmu_to_human36m=False, transfer_human36m_to_human36m=False):
-        keypoints_gt = self.labels['table']['keypoints'][:, :self.num_keypoints]
+    def evaluate(self, keypoints_3d_predicted):
+        keypoints_gt = []
+        for i in range(len(self)):
+            keypoints_gt.append(self.grouping[0]['keypoints_3d'])
+        keypoints_gt = np.array(keypoints_gt)
+
         if keypoints_3d_predicted.shape != keypoints_gt.shape:
             raise ValueError(
                 '`keypoints_3d_predicted` shape should be %s, got %s' % \
                 (keypoints_gt.shape, keypoints_3d_predicted.shape))
 
-        if transfer_cmu_to_human36m or transfer_human36m_to_human36m:
-            human36m_joints = [10, 11, 15, 14, 1, 4]
-            if transfer_human36m_to_human36m:
-                cmu_joints = [10, 11, 15, 14, 1, 4]
-            else:
-                cmu_joints = [10, 8, 9, 7, 14, 13]
-
-            keypoints_gt = keypoints_gt[:, human36m_joints]
-            keypoints_3d_predicted = keypoints_3d_predicted[:, cmu_joints]
-
         # mean error per 16/17 joints in mm, for each pose
         per_pose_error = np.sqrt(((keypoints_gt - keypoints_3d_predicted) ** 2).sum(2)).mean(1)
 
         # relative mean error per 16/17 joints in mm, for each pose
-        if not (transfer_cmu_to_human36m or transfer_human36m_to_human36m):
-            root_index = 6 if self.kind == "mpii" else 6
-        else:
-            root_index = 0
-
+        root_index = 6
         keypoints_gt_relative = keypoints_gt - keypoints_gt[:, root_index:root_index + 1, :]
         keypoints_3d_predicted_relative = keypoints_3d_predicted - keypoints_3d_predicted[:, root_index:root_index + 1, :]
 
         per_pose_error_relative = np.sqrt(((keypoints_gt_relative - keypoints_3d_predicted_relative) ** 2).sum(2)).mean(1)
 
         result = {
-            'per_pose_error': self.evaluate_using_per_pose_error(per_pose_error, split_by_subject),
-            'per_pose_error_relative': self.evaluate_using_per_pose_error(per_pose_error_relative, split_by_subject)
+            'per_pose_error': self.evaluate_using_per_pose_error(per_pose_error, True),
+            'per_pose_error_relative': self.evaluate_using_per_pose_error(per_pose_error_relative, True)
         }
 
         return result['per_pose_error_relative']['Average']['Average'], result
+        return np.mean(per_pose_error), {}

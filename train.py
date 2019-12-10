@@ -246,8 +246,8 @@ def one_epoch(model, criterion, opt, config, dataloader, device, epoch, n_iters_
         for iter_i, batch in iterator:
             if iter_i % 100 == 0:
                 print(str(iter_i) + " / " + str(len(dataloader)))
-                with open(os.path.join(checkpoint_dir, str(iter_i) + "_pred_2d.pkl"), 'wb') as fout:
-                    pickle.dump(pred_2d_all_dict, fout)
+                # with open(os.path.join(checkpoint_dir, str(iter_i) + "_pred_2d.pkl"), 'wb') as fout:
+                #                 #     pickle.dump(pred_2d_all_dict, fout)
             with autograd.detect_anomaly():
                 # measure data loading time
                 data_time.update(time.time() - end)
@@ -265,10 +265,10 @@ def one_epoch(model, criterion, opt, config, dataloader, device, epoch, n_iters_
                     keypoints_3d_pred, heatmaps_pred, volumes_pred, confidences_pred, cuboids_pred, coord_volumes_pred, base_points_pred = model(images_batch, proj_matricies_batch, batch)
 
                 #################### save 2d pred and confidence
-                confidences_pred_ = confidences_pred.unsqueeze(-1)
-                pred_2d_all = torch.cat([keypoints_2d_pred, confidences_pred_], dim=-1)
-                pred_2d_all_dict["pred"].append(pred_2d_all)
-                pred_2d_all_dict["sample_indexes"].append(batch['indexes'])
+                # confidences_pred_ = confidences_pred.unsqueeze(-1)
+                # pred_2d_all = torch.cat([keypoints_2d_pred, confidences_pred_], dim=-1)
+                # pred_2d_all_dict["pred"].append(pred_2d_all)
+                # pred_2d_all_dict["sample_indexes"].append(batch['indexes'])
 
 
                 batch_size, n_views, image_shape = images_batch.shape[0], images_batch.shape[1], tuple(images_batch.shape[3:])
@@ -443,9 +443,9 @@ def one_epoch(model, criterion, opt, config, dataloader, device, epoch, n_iters_
             with open(os.path.join(checkpoint_dir, "metric.json".format(epoch)), 'w') as fout:
                 json.dump(full_metric, fout, indent=4, sort_keys=True)
 
-            # dump 2d prediction:
-            with open(os.path.join(checkpoint_dir, "pred_2d.pkl"),'wb') as fout:
-                pickle.dump(pred_2d_all_dict, fout)
+            # # dump 2d prediction:
+            # with open(os.path.join(checkpoint_dir, "pred_2d.pkl"),'wb') as fout:
+            #     pickle.dump(pred_2d_all_dict, fout)
 
         # dump to tensorboard per-epoch stats
         for title, value in metric_dict.items():

@@ -1,12 +1,14 @@
 import numpy as np
 import scipy.ndimage
 import skimage
+from skimage import transform
 import cv2
 
 import torch
 
 import matplotlib
 from matplotlib import pylab as plt
+
 from mpl_toolkits.mplot3d import axes3d, Axes3D
 matplotlib.use('Agg')
 

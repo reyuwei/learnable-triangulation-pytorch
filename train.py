@@ -470,7 +470,11 @@ def init_distributed(args):
 
 
 def main(args):
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+
+    # config
+    config = cfg.load_config(args.config)
+    config.opt.n_iters_per_epoch = config.opt.n_objects_per_epoch // config.opt.batch_size
+    os.environ["CUDA_VISIBLE_DEVICES"] = config.gpus
     print("Number of available GPUs: {}".format(torch.cuda.device_count()))
 
     is_distributed = init_distributed(args)
@@ -482,10 +486,6 @@ def main(args):
         device = torch.device(args.local_rank)
     else:
         device = torch.device(0)
-
-    # config
-    config = cfg.load_config(args.config)
-    config.opt.n_iters_per_epoch = config.opt.n_objects_per_epoch // config.opt.batch_size
 
     model = {
         "ransac": RANSACTriangulationNet,

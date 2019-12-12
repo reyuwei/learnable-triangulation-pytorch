@@ -223,6 +223,25 @@ class SynMITMultiviewDataset(Dataset):
                     bbxs.append(bbox)
                     # left upper right lower
 
+                    ##### pre-process
+                    # bbox = scale_bbox(bbox, self.scale_bbox)
+                    # image = cv2.imread(imgname)
+                    # if self.crop:
+                    #     image = crop_image(image, bbox)
+                    #     camera.update_after_crop(bbox)
+                    #
+                    # if self.image_shape is not None:
+                    #     image_shape_before_resize = image.shape[:2]
+                    #     image = resize_image(image, self.image_shape)
+                    #     camera.update_after_resize(image_shape_before_resize, self.image_shape)
+                    #
+                    # if self.norm_image:
+                    #     image = normalize_image(image)
+                    #
+                    # saveas = {'image':image, "camera":camera,"detections":bbox}
+                    # with open(os.path.join(frame_folder_abs, imgfile[0:-4] + ".pkl"), 'wb') as f:
+                    #     pickle.dump(saveas, f, pickle.HIGHEST_PROTOCOL)
+
                     # image = cv2.imread(imgname)
                     # image = crop_image(image, bbox)
                     # camera.update_after_crop(bbox)
@@ -269,23 +288,30 @@ class SynMITMultiviewDataset(Dataset):
 
         for i in range(len(imgnames)):
             imgname = imgnames[i]
-            bbox = bboxs[i]
-            camera = cameras[i]
 
-            bbox = scale_bbox(bbox, self.scale_bbox)
-            image = cv2.imread(imgname)
-            if self.crop:
-                image = crop_image(image, bbox)
-                camera.update_after_crop(bbox)
+            if os.path.exists(imgname[0:-4]+".pkl"):
+                with open(imgname[0:-4]+".pkl", 'rb') as f:
+                    preprocess = pickle.load(f)
+                image = preprocess['image']
+                camera = preprocess['camera']
+                bbox = preprocess['detections']
+            else:
+                bbox = bboxs[i]
+                camera = cameras[i]
+                bbox = scale_bbox(bbox, self.scale_bbox)
+                image = cv2.imread(imgname)
+                if self.crop:
+                    image = crop_image(image, bbox)
+                    camera.update_after_crop(bbox)
 
-            if self.image_shape is not None:
-                image_shape_before_resize = image.shape[:2]
-                image = resize_image(image, self.image_shape)
-                camera.update_after_resize(image_shape_before_resize, self.image_shape)
-                sample['image_shapes_before_resize'].append(image_shape_before_resize)
+                if self.image_shape is not None:
+                    image_shape_before_resize = image.shape[:2]
+                    image = resize_image(image, self.image_shape)
+                    camera.update_after_resize(image_shape_before_resize, self.image_shape)
+                    sample['image_shapes_before_resize'].append(image_shape_before_resize)
 
-            if self.norm_image:
-                image = normalize_image(image)
+                if self.norm_image:
+                    image = normalize_image(image)
 
             sample['images'].append(image)
             sample['cameras'].append(camera)
@@ -344,7 +370,7 @@ class SynMITMultiviewDataset(Dataset):
     def evaluate(self, keypoints_3d_predicted):
         keypoints_gt = []
         for i in range(len(self)):
-            keypoints_gt.append(self.grouping[0]['keypoints_3d'])
+            keypoints_gt.append(self.grouping[i]['keypoints_3d'])
         keypoints_gt = np.array(keypoints_gt)
 
         if keypoints_3d_predicted.shape != keypoints_gt.shape:

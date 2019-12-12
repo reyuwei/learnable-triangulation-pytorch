@@ -1,8 +1,8 @@
 title: "synmit_alg"
 kind: "synmit"
-vis_freq: 50
+vis_freq: 1000
 vis_n_elements: 10
-
+gpus: '3'
 #image_shape: [384, 384]
 image_shape: [256, 256]
 
@@ -11,7 +11,7 @@ opt:
   mse_smooth_threshold: 400
 
   n_objects_per_epoch: 15000
-  n_epochs: 100
+  n_epochs: 50
 
   batch_size: 2
   val_batch_size: 16
@@ -25,8 +25,8 @@ model:
 
 #  init_weights: true
 #  checkpoint: "data/pretrained/human36m/weights_alg.pth"
-  init_weights: false
-  checkpoint: None
+  init_weights: true
+  checkpoint: "logs/synmit_alg_AlgebraicTriangulationNet@10122019_04-13-30/checkpoints/0027/weights.pth"
 
   use_confidences: true
   heatmap_multiplier: 100.0

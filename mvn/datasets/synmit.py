@@ -224,23 +224,23 @@ class SynMITMultiviewDataset(Dataset):
                     # left upper right lower
 
                     ##### pre-process
-                    # bbox = scale_bbox(bbox, self.scale_bbox)
-                    # image = cv2.imread(imgname)
-                    # if self.crop:
-                    #     image = crop_image(image, bbox)
-                    #     camera.update_after_crop(bbox)
-                    #
-                    # if self.image_shape is not None:
-                    #     image_shape_before_resize = image.shape[:2]
-                    #     image = resize_image(image, self.image_shape)
-                    #     camera.update_after_resize(image_shape_before_resize, self.image_shape)
-                    #
-                    # if self.norm_image:
-                    #     image = normalize_image(image)
-                    #
-                    # saveas = {'image':image, "camera":camera,"detections":bbox}
-                    # with open(os.path.join(frame_folder_abs, imgfile[0:-4] + ".pkl"), 'wb') as f:
-                    #     pickle.dump(saveas, f, pickle.HIGHEST_PROTOCOL)
+                    bbox = scale_bbox(bbox, self.scale_bbox)
+                    image = cv2.imread(imgname)
+                    if self.crop:
+                        image = crop_image(image, bbox)
+                        camera.update_after_crop(bbox)
+
+                    if self.image_shape is not None:
+                        image_shape_before_resize = image.shape[:2]
+                        image = resize_image(image, self.image_shape)
+                        camera.update_after_resize(image_shape_before_resize, self.image_shape)
+
+                    if self.norm_image:
+                        image = normalize_image(image)
+
+                    saveas = {'image':image, "camera":camera,"detections":bbox}
+                    with open(os.path.join(frame_folder_abs, imgfile[0:-4] + ".pkl"), 'wb') as f:
+                        pickle.dump(saveas, f, pickle.HIGHEST_PROTOCOL)
 
                     # image = cv2.imread(imgname)
                     # image = crop_image(image, bbox)

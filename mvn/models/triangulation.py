@@ -173,7 +173,7 @@ class AlgebraicTriangulationNet(nn.Module):
         alg_confidences = alg_confidences / alg_confidences.sum(dim=1, keepdim=True)
         alg_confidences = alg_confidences + 1e-5  # for numerical stability
 
-        # # calcualte shapes
+        # calcualte shapes
         image_shape = tuple(images.shape[3:])
         batch_size, n_views, n_joints, heatmap_shape = heatmaps.shape[0], heatmaps.shape[1], heatmaps.shape[2], tuple(heatmaps.shape[3:])
 
@@ -199,7 +199,7 @@ class AlgebraicTriangulationNet(nn.Module):
 
         return keypoints_3d, keypoints_2d, heatmaps, alg_confidences
 
-        return None, keypoints_2d, heatmaps, alg_confidences
+        # return None, keypoints_2d, heatmaps, alg_confidences
 
 
 class VolumetricTriangulationNet(nn.Module):

@@ -247,7 +247,7 @@ def one_epoch(model, criterion, opt, config, dataloader, device, epoch, n_iters_
             if iter_i % 100 == 0:
                 print(str(iter_i) + " / " + str(len(dataloader)))
                 # with open(os.path.join(checkpoint_dir, str(iter_i) + "_pred_2d.pkl"), 'wb') as fout:
-                #                 #     pickle.dump(pred_2d_all_dict, fout)
+                #     pickle.dump(pred_2d_all_dict, fout)
             with autograd.detect_anomaly():
                 # measure data loading time
                 data_time.update(time.time() - end)
@@ -443,9 +443,9 @@ def one_epoch(model, criterion, opt, config, dataloader, device, epoch, n_iters_
             with open(os.path.join(checkpoint_dir, "metric.json".format(epoch)), 'w') as fout:
                 json.dump(full_metric, fout, indent=4, sort_keys=True)
 
-            # # dump 2d prediction:
-            # with open(os.path.join(checkpoint_dir, "pred_2d.pkl"),'wb') as fout:
-            #     pickle.dump(pred_2d_all_dict, fout)
+            # dump 2d prediction:
+            with open(os.path.join(checkpoint_dir, "pred_2d.pkl"),'wb') as fout:
+                pickle.dump(pred_2d_all_dict, fout)
 
         # dump to tensorboard per-epoch stats
         for title, value in metric_dict.items():

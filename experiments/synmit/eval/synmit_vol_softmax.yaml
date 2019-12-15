@@ -2,7 +2,7 @@ title: "synmit_vol"
 kind: "synmit"
 vis_freq: 1000
 vis_n_elements: 10
-gpus: '3'
+gpus: '1'
 image_shape: [256, 256]
 
 opt:
@@ -14,7 +14,7 @@ opt:
   n_objects_per_epoch: 15000
   n_epochs: 60
 
-  batch_size: 1
+  batch_size: 2
   val_batch_size: 10
 
   lr: 0.0001
@@ -28,8 +28,8 @@ model:
   kind: "mpii"
   volume_aggregation_method: "softmax"
 
-  init_weights: false
-  checkpoint: null
+  init_weights: true
+  checkpoint: "logs/synmit_vol_VolumetricTriangulationNet@14122019_05-59-48/checkpoints/0007/weights.pth"
 
   use_gt_pelvis: false
 
@@ -57,10 +57,10 @@ dataset:
   view_count: 8
 
   train:
-    # synmit_root: "E:\\LIYUWEI\\H3.6m\\animation_mit\\"
+#    synmit_root: "E:\\LIYUWEI\\H3.6m\\animation_mit\\"
     synmit_root: "/data/liyuwei/Pose/dataset/animation_mit/"
     scale_bbox: 1.0
-    pred_results_path: "logs/eval_synmit_alg_AlgebraicTriangulationNet@14122019_05-41-43/checkpoints/0000/results.pkl"
+    pred_results_path: "logs/eval_synmit_alg_AlgebraicTriangulationNet@12122019_04-18-36/checkpoints/0000/results.pkl"
 
     shuffle: true
     randomize_n_views: false
@@ -69,10 +69,11 @@ dataset:
     num_workers: 8
 
   val:
-    # synmit_root: "E:\\LIYUWEI\\H3.6m\\animation_mit\\"
+#    synmit_root: "E:\\LIYUWEI\\H3.6m\\animation_mit\\"
     synmit_root: "/data/liyuwei/Pose/dataset/animation_mit/"
     scale_bbox: 1.0
-    pred_results_path: "logs/synmit_alg_AlgebraicTriangulationNet@13122019_08-14-30/checkpoints/0049/results.pkl"
+#    pred_results_path: "logs/eval_synmit_alg_AlgebraicTriangulationNet@12122019_03-32-22/checkpoints/0000/results.pkl"
+    pred_results_path: "logs/eval_synmit_alg_AlgebraicTriangulationNet@14122019_05-34-50/checkpoints/0000/results.pkl"
 
     shuffle: false
     randomize_n_views: false
